@@ -1,17 +1,16 @@
-import streamlit as st
-import gspread
-from google.oauth2.service_account import Credentials
-from datetime import datetime
+# =============================
+# 1️⃣ CONFIGURACIÓN DE GOOGLE SHEETS (USANDO STREAMLIT SECRETS)
+# =============================
 import json
+from google.oauth2.service_account import Credentials
+import gspread
 
-# =============================
-# 1. CONFIGURACIÓN DE GOOGLE SHEETS
-# =============================
+# Definimos el scope de acceso
 scope = ["https://www.googleapis.com/auth/spreadsheets",
          "https://www.googleapis.com/auth/drive"]
 
-# Cargar credenciales desde Streamlit Secrets
-creds_dict = json.loads(st.secrets["GOOGLE_CREDS"]["value"])
+# Obtenemos las credenciales desde Streamlit Secrets
+creds_dict = st.secrets["GOOGLE_CREDS"]  # <--- tu JSON completo en Manage app → Secrets
 creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
 client = gspread.authorize(creds)
 
@@ -145,3 +144,4 @@ if st.button("Guardar resultados"):
     datos = [fecha, nombre, edad, peso, altura, sexo, actividad, objetivo, round(calorias_objetivo)]
     sheet.append_row(datos)
     st.success("Tus datos fueron guardados en Google Sheets ✅")
+
