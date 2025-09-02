@@ -1,16 +1,17 @@
-# =============================
-# 1️⃣ CONFIGURACIÓN DE GOOGLE SHEETS (USANDO STREAMLIT SECRETS)
-# =============================
-import json
-from google.oauth2.service_account import Credentials
+import streamlit as st
 import gspread
+from google.oauth2.service_account import Credentials
+from datetime import datetime
+import json
 
-# Definimos el scope de acceso
+# =============================
+# 1️⃣ CONFIGURACIÓN DE GOOGLE SHEETS (USANDO SECRETS)
+# =============================
 scope = ["https://www.googleapis.com/auth/spreadsheets",
          "https://www.googleapis.com/auth/drive"]
 
-# Obtenemos las credenciales desde Streamlit Secrets
-creds_dict = st.secrets["GOOGLE_CREDS"]  # <--- tu JSON completo en Manage app → Secrets
+# Cargamos las credenciales desde Streamlit Secrets
+creds_dict = json.loads(st.secrets["GOOGLE_CREDS"])
 creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
 client = gspread.authorize(creds)
 
@@ -19,7 +20,7 @@ sheet_id = "1txRNRHgn-sn9YxXmS3NPA44ww-eYkZ6J14Yc0t3KyVE"
 sheet = client.open_by_key(sheet_id).sheet1
 
 # =============================
-# 2. DISEÑO DE LA PÁGINA
+# 2️⃣ DISEÑO DE LA PÁGINA (Dark/Light Mode)
 # =============================
 page_bg = """
 <style>
@@ -31,7 +32,7 @@ page_bg = """
     border-radius: 10px;
 }
 
-/* Modo claro: fondo blanco, letras negras */
+/* Modo claro */
 body[data-theme="light"] {
     background-color: #ffffff;
 }
@@ -39,11 +40,11 @@ body[data-theme="light"] [data-testid="stHeader"],
 body[data-theme="light"] [data-testid="stSidebar"],
 body[data-theme="light"] [data-testid="stMarkdownContainer"],
 body[data-theme="light"] [data-testid="stMetric"] {
-    background-color: rgba(240, 240, 240, 0.95);
+    background-color: rgba(240,240,240,0.95);
     color: #000000;
 }
 
-/* Modo oscuro: fondo negro, letras blancas */
+/* Modo oscuro */
 body[data-theme="dark"] {
     background-color: #121212;
 }
@@ -51,7 +52,7 @@ body[data-theme="dark"] [data-testid="stHeader"],
 body[data-theme="dark"] [data-testid="stSidebar"],
 body[data-theme="dark"] [data-testid="stMarkdownContainer"],
 body[data-theme="dark"] [data-testid="stMetric"] {
-    background-color: rgba(30, 30, 30, 0.85);
+    background-color: rgba(30,30,30,0.85);
     color: #ffffff;
 }
 </style>
@@ -59,10 +60,10 @@ body[data-theme="dark"] [data-testid="stMetric"] {
 st.markdown(page_bg, unsafe_allow_html=True)
 
 # =============================
-# 3. ENTRADAS DEL USUARIO
+# 3️⃣ ENTRADAS DEL USUARIO
 # =============================
 st.title("🔥 Calculadora Fitness 2.0")
-st.markdown("Bienvenido a tu app de nutrición y entrenamiento. 💪")
+st.markdown("Bienvenido a tu app de nutrición y entrenamiento 💪")
 
 st.header("📌 Datos personales")
 nombre = st.text_input("Nombre completo")
@@ -88,7 +89,7 @@ objetivo = st.radio(
 st.markdown("---")
 
 # =============================
-# 4. CÁLCULOS
+# 4️⃣ CÁLCULOS
 # =============================
 if sexo == "Hombre":
     tmb = 88.36 + (13.4 * peso) + (4.8 * altura) - (5.7 * edad)
@@ -114,34 +115,33 @@ else:
     calorias_objetivo = gasto_diario + 500
 
 # =============================
-# 5. RESULTADOS
+# 5️⃣ RESULTADOS
 # =============================
 st.header("📊 Resultados")
 col1, col2, col3 = st.columns(3)
 with col1:
     st.metric("IMC", round(imc, 2))
 with col2:
-    st.metric("Tasa Metabólica Basal", f"{round(tmb)} kcal")
+    st.metric("TMB", f"{round(tmb)} kcal")
 with col3:
     st.metric("Gasto Energético Diario", f"{round(gasto_diario)} kcal")
 
 st.markdown("---")
 st.subheader("✅ Recomendación")
 if objetivo == "Mantener peso":
-    st.success(f"Para mantener tu peso, deberías consumir alrededor de **{round(calorias_objetivo)} kcal** al día.")
+    st.success(f"Consumir aproximadamente **{round(calorias_objetivo)} kcal** al día.")
 elif objetivo == "Bajar de peso":
-    st.warning(f"Para bajar de peso, deberías consumir aproximadamente **{round(calorias_objetivo)} kcal** al día.")
+    st.warning(f"Consumir aproximadamente **{round(calorias_objetivo)} kcal** al día (déficit ~500 kcal).")
 else:
-    st.info(f"Para subir de peso, deberías consumir aproximadamente **{round(calorias_objetivo)} kcal** al día.")
+    st.info(f"Consumir aproximadamente **{round(calorias_objetivo)} kcal** al día (superávit ~500 kcal).")
 
-st.caption("⚠️ Este cálculo es una estimación y no reemplaza la consulta con un nutricionista.")
+st.caption("⚠️ Este cálculo es solo una estimación. Consulta a un profesional si es necesario.")
 
 # =============================
-# 6. GUARDAR DATOS EN GOOGLE SHEETS
+# 6️⃣ GUARDAR DATOS EN GOOGLE SHEETS
 # =============================
 if st.button("Guardar resultados"):
     fecha = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     datos = [fecha, nombre, edad, peso, altura, sexo, actividad, objetivo, round(calorias_objetivo)]
     sheet.append_row(datos)
     st.success("Tus datos fueron guardados en Google Sheets ✅")
-
